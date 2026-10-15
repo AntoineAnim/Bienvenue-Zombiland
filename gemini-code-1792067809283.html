@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Survie Zombie</title>
+<style>
+:root{--bg:#f4f1ea;--card:#fff;--tx:#1d1d1b;--mut:#6b6b66;--ac:#2f7d32;--att:#c62828;--def:#1565c0;--bd:#ddd8cc;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121512;--card:#1d221d;--tx:#e8ece6;--mut:#99a396;--ac:#6fcf73;--att:#ff6b60;--def:#64b5f6;--bd:#2e362d}}
+:root[data-theme="dark"]{--bg:#121512;--card:#1d221d;--tx:#e8ece6;--mut:#99a396;--ac:#6fcf73;--att:#ff6b60;--def:#64b5f6;--bd:#2e362d}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font-family:system-ui,-apple-system,Segoe UI,sans-serif;max-width:520px;margin:0 auto;padding:12px}
+h1{font-size:1.3rem;margin:4px 0 10px}
+nav{display:flex;gap:6px;margin-bottom:12px}
+nav button{flex:1;padding:10px 4px;border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;font-size:.9rem;font-weight:600}
+nav button.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:12px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats div{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px 4px}
+.stats b{display:block;font-size:2rem}
+.stats span{font-size:.75rem;color:var(--mut)}
+.att b{color:var(--att)}.def b{color:var(--def)}.ant b{color:var(--ac)}
+button.big,a.big{width:100%;padding:14px;font-size:1rem;border:0;border-radius:12px;background:var(--ac);color:#fff;margin-bottom:8px;cursor:pointer}
+button.sec{padding:10px;border:1px solid var(--bd);background:transparent;color:var(--tx);border-radius:10px;cursor:pointer}
+input{width:100%;padding:12px;font-size:1rem;border:1px solid var(--bd);border-radius:10px;background:var(--bg);color:var(--tx)}
+.row{display:flex;gap:8px}
+#msg{min-height:1.4em;font-weight:600;margin:6px 0}
+ul{list-style:none;padding:0;margin:0}
+li{padding:8px 0;border-bottom:1px solid var(--bd);display:flex;justify-content:space-between}
+.verdict{font-size:1.1rem;font-weight:700;text-align:center;padding:14px;border-radius:12px;margin-top:10px;line-height:1.4}
+.win{background:#2e7d3233;color:var(--ac)}.lose{background:#c6282833;color:var(--att)}
+.hide{display:none}
+
+body.zombie{--bg:#1a0707;--card:#2b0f0f;--tx:#f5dede;--mut:#c49a9a;--ac:#b71c1c;--bd:#4d1c1c}
+header{display:flex;justify-content:space-between;align-items:center}
+#mute{border:1px solid var(--bd);background:var(--card);color:var(--tx);border-radius:10px;padding:8px 10px;font-size:1.1rem;cursor:pointer}
+.hearts{font-size:1.8rem;text-align:center;letter-spacing:.1em;margin:10px 0}
+.opp{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px;margin-bottom:8px;border:1px solid var(--bd);background:var(--bg);color:var(--tx);border-radius:12px;font-size:1rem;text-align:left;cursor:pointer}
+.opp span{font-size:.85rem;color:var(--mut)}
+.opp:disabled{opacity:.45;cursor:not-allowed}
+#toast{position:fixed;left:12px;right:12px;top:calc(env(safe-area-inset-top,0px) + 10px);background:var(--ac);color:#fff;padding:12px;border-radius:12px;font-weight:700;text-align:center;z-index:9;display:none;max-width:496px;margin:0 auto}
+.zbig{text-align:center;font-size:1rem}.zbig b{display:block;font-size:2.2rem;color:var(--att);margin:4px 0}
+.frozen{background:#1565c033;color:#64b5f6;text-align:center;padding:12px;border-radius:12px;font-weight:700;margin-bottom:10px}
+.upgrade-box{background:var(--card);border:2px solid var(--ac);border-radius:12px;padding:12px;margin:10px 0;text-align:center}
+.upgrade-box p{margin:0 0 10px 0;font-weight:700;color:var(--ac)}
+.upgrade-btns{display:flex;gap:8px}
+.upgrade-btns button{flex:1;padding:10px;border:none;border-radius:8px;font-weight:700;color:#fff;cursor:pointer}
+.btn-att{background:var(--att)}
+.btn-def{background:var(--def)}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<header><h1 id="ttl">🧟 Survie Zombie</h1><button id="mute" aria-label="Son">🔊</button></header>
+<div id="noteam" class="card hide">Ouvre le lien de ton équipe pour jouer.</div>
+<nav><button data-t="equip" class="on">Équipement</button><button data-t="combat">Combat</button></nav>
+<div id="tabs">
+<section id="equip">
+<div id="survView">
+<div class="stats"><div class="att"><b id="sa">0</b><span>ATTAQUE</span></div><div class="def"><b id="sd">0</b><span>DÉFENSE</span></div><div class="ant"><b id="sn">0/4</b><span>ANTIDOTES</span></div></div>
+<div class="hearts" id="hearts"></div>
+<div class="card">
+<b>Tu as trouvé un code ?</b>
+<div class="row" style="margin-top:8px"><input id="man" placeholder="Saisis le code" autocapitalize="characters" autocomplete="off" autocorrect="off" spellcheck="false"><button class="sec" id="ok">OK</button></div>
+<div id="msg"></div>
+</div>
+<div class="card"><b>Mon sac</b><ul id="bag"></ul></div>
+</div>
+<div id="zomView" class="hide">
+<div class="card zbig">🧟 Tu es devenu un <b>ZOMBIE</b>Traque les survivants et contamine-les !</div>
+<div id="zUpgrade" class="hide"></div>
+<div class="stats"><div class="att"><b id="za">0</b><span>ATTAQUE</span></div><div class="def"><b id="zd">0</b><span>DÉFENSE</span></div><div class="ant"><b id="zn">0/4</b><span>CONTAMINATIONS</span></div></div>
+<div id="zfrozen" style="margin-top:12px"></div>
+</div>
+</section>
+<section id="combat" class="hide">
+<div class="card">
+<b id="cbt">Contre quelle équipe te bats-tu ?</b>
+<div id="cfrozen" style="margin-top:8px"></div>
+<div id="opps" style="margin-top:8px"></div>
+<div id="res"></div>
+</div>
+<div class="card" style="color:var(--mut);font-size:.85rem">
+<b>Règles du combat :</b><br>
+• Si Zombie Attaque > Défense : le survivant perd des ❤️ (écart d'attaque).<br>
+• Si Défense Survivant ≥ Zombie Attaque : le zombie est immobilisé.<br>
+• Si Attaque Survivant > Défense Zombie : le zombie est immobilisé (30s / point d'écart).
+</div>
+</section>
+</div>
+<script>
+const FB="https://bienvenue-a-zombiland-default-rtdb.europe-west1.firebasedatabase.app";
+const ITEMS=[
+{id:"a1",n:"Batte de baseball",t:"att",p:3},
+{id:"a2",n:"Hache",t:"att",p:4},
+{id:"a3",n:"Machette",t:"att",p:4},
+{id:"a4",n:"Poêle en fonte",t:"att",p:2},
+{id:"a5",n:"Couteau",t:"att",p:2},
+{id:"a6",n:"Arc",t:"att",p:3},
+{id:"d1",n:"Casque",t:"def",p:2},
+{id:"d2",n:"Gilet renforcé",t:"def",p:4},
+{id:"d3",n:"Bouclier",t:"def",p:3},
+{id:"d4",n:"Gants",t:"def",p:1},
+{id:"d5",n:"Bottes",t:"def",p:1},
+{id:"d6",n:"Veste en cuir",t:"def",p:2},
+{id:"h1",n:"Trousse de soins",t:"heart",p:1},
+{id:"h2",n:"Kit de secours",t:"heart",p:1},
+{id:"x1",n:"Antidote 1",t:"ant",p:0},
+{id:"x2",n:"Antidote 2",t:"ant",p:0},
+{id:"x3",n:"Antidote 3",t:"ant",p:0},
+{id:"x4",n:"Antidote 4",t:"ant",p:0}];
+const CODES=[
+{h:"1e3ff116c017e13a2da1f2acc318618b7f598384ded5801513a01e73f210f98c",id:"a1",k:1},
+{h:"6fafcdd4365e324ee08c99eea5727425485821fae95c13335fea6791336e4ecb",id:"a1",k:2},
+{h:"ff660c086d686fdb2a878b2fa9a59e32ebc660cef2877483555b6c767973d75e",id:"a1",k:3},
+{h:"a9c5b9e3e15bc3fe24629ac523d7c5b0cda0ea77cff86c6b09f8a823a106e31e",id:"a2",k:1},
+{h:"a6aebd6c9ad273e9efc3b01f3962bf57223a276c920d978c5d0928c0ee17f1cb",id:"a2",k:2},
+{h:"fae2ee1207e1559ea38de0c41651912d16d1cdf272ab21170d13673aee8f5b92",id:"a2",k:3},
+{h:"0e473161603f41d49805046c111043221ca0c38628e39ea6e339659d07539156",id:"a3",k:1},
+{h:"580ca2f2633edd39fcbd9a4882e101ceb2e56c8a36b42ba4bae95c5e0cf29cb4",id:"a3",k:2},
+{h:"73a7f7b9ac8467fe9ea929a2a9d3db204fcfedceed63d68884c4e20049bb6b00",id:"a3",k:3},
+{h:"d4dad8957cb804fc58d9c4241b71c3898265dae432407dd29459e57f99c15066",id:"a4",k:1},
+{h:"1dca93330213a37c9505fd2cc1b709e02b2ccb772ced861f97ff118498d16e09",id:"a4",k:2},
+{h:"f5150d4e70576e43ed636a15f05cef249403c16973048ec3ad4b99f8a79b6cc0",id:"a4",k:3},
+{h:"898d1021e9520ad869a0634aabaf71b82ee9a834510f326321cf91e869e7e03d",id:"a5",k:1},
+{h:"76796227641938ccca57e582ab86a5b6800b2e5646b59c85850a3fda42da93b7",id:"a5",k:2},
+{h:"cf1433949c5016cf8da8bb4eae3118ba5fe30e5b8e1543e97a30215a454e23db",id:"a5",k:3},
+{h:"498b6f54bc9cbb367d74088b57247f285bfb99a0028c10811857c6022663fee5",id:"a6",k:1},
+{h:"c7e966fcdc56b206c5cf7c93dd327ed00c48e7a733f81d4391fd38546f57c712",id:"a6",k:2},
+{h:"ba09762d09b88cc1011329d95735d1d59877c77ff5ba279dbab57e9d18e0705c",id:"a6",k:3},
+{h:"d3ded38437dd1d81986be80a2a9a70447c9df1c664f4b7639299a08c420a6dd3",id:"d1",k:1},
+{h:"22ceeeb374ddeda988fd047bc85f6fc066bc34929056ac73be8d284788e129c9",id:"d1",k:2},
+{h:"5a49c3264e5887dc3c56b426a980c5016ab5e240549e4074906a892842750487",id:"d1",k:3},
+{h:"40bd65e40bb06995373ffa149f335b44f09278147e139c0b300a77fc48a795ea",id:"d2",k:1},
+{h:"0c7965865fed4cdc1a91849703fe216efcaf60e47534de3bfcf2ffb9d1d43f00",id:"d2",k:2},
+{h:"1dd01d36e93f50a738d057122ec0087f8fb4a3ae166354727d976497d7fcbf5b",id:"d2",k:3},
+{h:"b03e068509a00399bf7191c16ab80b5217ec5e6d4665ee45f34d9f84bf7f8cb1",id:"d3",k:1},
+{h:"319633343424fb7a31b290e474afd35cbee78366f2ecc650a51da8c6449a52e2",id:"d3",k:2},
+{h:"98ab0562de7de5e8e1bfa4e983154a7cd06c9f28400d193ab3b2770441f96c36",id:"d3",k:3},
+{h:"11a242c8079499a5cd1c0ebe2c87c97786c14f32622d0c5441d4733ee4392ebd",id:"d4",k:1},
+{h:"f87806bcb45282d7fed1966a3f203df84c4195ce4b41e91d2555508d1db4e248",id:"d4",k:2},
+{h:"6e2124b011ac4baa993d78ad0cbef8cfbf9eba74d94780dab631cbc6a9c01c6c",id:"d4",k:3},
+{h:"fde7b92fb645db89f79071b861156acb15e669ea111edb37badd351bb76c6501",id:"d5",k:1},
+{h:"366524f39200f1e4f739cf030c198446e260fd28b7c13a2d2242a13eafb99e6d",id:"d5",k:2},
+{h:"5bc8380d3da107092a2df7f533b4ae6ed2cece33f358a6d26a7c23f9277fb3dc",id:"d5",k:3},
+{h:"eeef82fa0c657750e71a0e96cbdf8ae38b508ac89ec340cf54bb343a02e1d233",id:"d6",k:1},
+{h:"f3de9538378182d79fea9f170d1f5c2671f83815250819869cd68194bdcddb65",id:"d6",k:2},
+{h:"62e3666a096a54cba1a5609350f5e187bced3656c92771268316f36bb92b1bb2",id:"d6",k:3},
+{h:"587eb35dc943fa931f9b6e52ff964d1886eadddeef5a92210e4a8f633267f6f6",id:"x1",k:1},
+{h:"e9520ba27897f280212b9a0f287d11ad5ab2b669bbea2ef5e4bac1751ae20f3a",id:"x2",k:1},
+{h:"e76f74d4e64b178d117e61b410fa7c0bfcebe077d9008be5ab94259b7510b054",id:"x3",k:1},
+{h:"6a36b9de80ecd9b03aec0c5f1675c96dac7d814bb5d3e7cd6ab2d22f35349b95",id:"x4",k:1},
+{h:"07535e72302179d12f4a9d6d42b1a34cc90fa8ee68c14bc5532a10d579044054",id:"h1",k:1},
+{h:"958dc53309a3c1e239b6505a5c2229d79b4ef79aac5746d7ebccc99331507264",id:"h1",k:2},
+{h:"5111eca797cf07e990d0c1c9f04a845d9c56fb68bdbb7eb443804788c92d7c1c",id:"h1",k:3},
+{h:"c635c71854c7a80fbb4eea654d47f376b7e05109e07d41813fc74627f5a5d522",id:"h2",k:1},
+{h:"1d044e94854ed2c5471957287f153b3561aea9fc2dcb892c3e0908e90cda23dd",id:"h2",k:2},
+{h:"a7cc77f4d98e7c8aacde6d945074db123b4b30f2891af79069e117e82bb59183",id:"h2",k:3}];
+const $=id=>document.getElementById(id);
+const TEAMS={rouge:['Rouge','#c62828'],bleu:['Bleu','#1565c0'],vert:['Vert','#2e7d32'],jaune:['Jaune','#b78103']};
+let team=location.hash.slice(1).toLowerCase();
+try{if(TEAMS[team])localStorage.setItem('zmb-team',team);else team=localStorage.getItem('zmb-team')||''}catch(e){}
+if(TEAMS[team]){document.documentElement.style.setProperty('--ac',TEAMS[team][1])}
+else{$('noteam').classList.remove('hide');$('tabs').classList.add('hide');document.querySelector('nav').classList.add('hide')}
+window.addEventListener('hashchange',()=>location.reload());
+
+let AC=null,muted=false;
+try{muted=localStorage.getItem('zmb-mute')==='1'}catch(e){}
+function ac(){try{if(!AC)AC=new(window.AudioContext||window.webkitAudioContext)();if(AC.state==='suspended')AC.resume()}catch(e){}return AC}
+function tone(f,t,d,type,v,f2){if(muted)return;const a=ac();if(!a)return;const o=a.createOscillator(),g=a.createGain();o.type=type||'sine';const s=a.currentTime+t;
+ o.frequency.setValueAtTime(f,s);if(f2)o.frequency.exponentialRampToValueAtTime(f2,s+d);
+ g.gain.setValueAtTime(0.0001,s);g.gain.exponentialRampToValueAtTime(v||.2,s+.02);g.gain.exponentialRampToValueAtTime(0.0001,s+d);
+ o.connect(g);g.connect(a.destination);o.start(s);o.stop(s+d+.05)}
+const SND={
+ found:()=>[523,659,784,1047].forEach((f,i)=>tone(f,i*.08,.15,'triangle',.22)),
+ fail:()=>{tone(180,0,.18,'square',.15);tone(120,.15,.25,'square',.15)},
+ heartUp:()=>{tone(660,0,.2,'sine',.25);tone(880,.15,.3,'sine',.25);tone(1320,.3,.35,'sine',.2)},
+ heartDown:()=>{tone(500,0,.45,'sawtooth',.2,110);tone(90,0,.5,'square',.12)},
+ win:()=>[392,523,659,784,1047].forEach((f,i)=>tone(f,i*.09,.18,'square',.14)),
+ lose:()=>{tone(300,0,.6,'sawtooth',.2,55);tone(70,.1,.6,'square',.14)},
+ freeze:()=>{tone(1200,0,.5,'sine',.2,150);tone(900,.1,.5,'triangle',.12,100)},
+ zombie:()=>{tone(90,0,1.2,'sawtooth',.25,45);tone(95,0,1.2,'sawtooth',.2,40);tone(300,.3,.8,'square',.08,60)},
+ survivor:()=>[392,523,659,784,1047].forEach((f,i)=>tone(f,i*.1,.25,'triangle',.22)),
+ tap:()=>tone(700,0,.05,'square',.08),
+ free:()=>{tone(440,0,.12,'triangle',.2);tone(660,.1,.2,'triangle',.2)}};
+const buzz=p=>{try{if(navigator.vibrate)navigator.vibrate(p)}catch(e){}};
+document.addEventListener('pointerdown',()=>ac(),{once:true});
+function paintMute(){$('mute').textContent=muted?'🔇':'🔊'}
+$('mute').onclick=()=>{muted=!muted;try{localStorage.setItem('zmb-mute',muted?'1':'0')}catch(e){}paintMute();if(!muted){ac();SND.tap()}};
+paintMute();
+
+let claims={},teams={},prevZ=null,prevFrozen=false,lastEv=0;
+try{lastEv=+(localStorage.getItem('zmb-ev-'+team)||0)}catch(e){}
+const itemOf=k=>ITEMS.find(i=>i.id===k.split('-')[0]);
+const itemsOf=t=>Object.keys(claims).filter(k=>claims[k]&&claims[k].team===t).map(itemOf).filter(Boolean);
+const sumFor=(t,ty)=>itemsOf(t).filter(i=>i.t===ty).reduce((s,i)=>s+i.p,0);
+const st=t=>teams[t]||{};
+const maxH=t=>3+sumFor(t,'heart'); // 3 CŒURS DE DÉPART + CŒURS BONUS
+const hearts=t=>Math.max(0,maxH(t)-(st(t).lost||0));
+const isZ=t=>!!st(t).zombie;
+
+// Calcul des stats totales (Equipement + Bonus Zombie accordés)
+const getAtt=t=>sumFor(t,'att')+(st(t).zBonusAtt||0);
+const getDef=t=>sumFor(t,'def')+(st(t).zBonusDef||0);
+
+const fLeft=t=>Math.max(0,Math.ceil(((st(t).frozenUntil||0)-Date.now())/1000));
+const fmt=s=>Math.floor(s/60)+':'+String(s%60).padStart(2,'0');
+const antl=()=>Object.keys(claims).map(itemOf).filter(i=>i&&i.t==='ant');
+function say(t,ok){const m=$('msg');m.textContent=t;m.style.color=ok?'var(--ac)':'var(--att)'}
+
+function render(){
+ if(!TEAMS[team])return;
+ const z=isZ(team),n=TEAMS[team][0];
+ document.body.classList.toggle('zombie',z);
+ $('survView').classList.toggle('hide',z);$('zomView').classList.toggle('hide',!z);
+ $('ttl').textContent=(z?'🧟 Équipe ':'🛡️ Équipe ')+n+(z?' · ZOMBIE':'');
+ 
+ $('sa').textContent=getAtt(team);
+ $('sd').textContent=getDef(team);
+ $('za').textContent=getAtt(team);
+ $('zd').textContent=getDef(team);
+ 
+ $('sn').textContent=antl().length+'/4';
+ $('zn').textContent=(st(team).kills||0);
+ 
+ const mx=maxH(team),h=hearts(team);
+ $('hearts').textContent='❤️'.repeat(h)+'🖤'.repeat(Math.max(0,mx-h));
+ $('bag').innerHTML=itemsOf(team).map(i=>'<li><span>'+i.n+'</span><b>'+(i.t==='att'?'⚔️ +'+i.p:i.t==='def'?'🛡️ +'+i.p:i.t==='heart'?'❤️ +1':'💉')+'</b></li>').join('')||'<li style="color:var(--mut)">Vide pour l\'instant</li>';
+ 
+ // Gestion des points d'amélioration Zombie non attribués
+ const pointsToChoose=st(team).pendingPoints||0;
+ if(z && pointsToChoose > 0){
+  $('zUpgrade').classList.remove('hide');
+  $('zUpgrade').innerHTML='<div class="upgrade-box"><p>🎉 Victoire ! Choisis ton amélioration :</p><div class="upgrade-btns"><button class="btn-att" onclick="chooseUpgrade(\'att\')">+1 ATTAQUE ⚔️</button><button class="btn-def" onclick="chooseUpgrade(\'def\')">+1 DÉFENSE 🛡️</button></div></div>';
+ }else{
+  $('zUpgrade').classList.add('hide');
+ }
+
+ const f=fLeft(team);
+ const box=f?'<div class="frozen">⛓️ Immobilisé : '+fmt(f)+'</div>':'';
+ $('zfrozen').innerHTML=z?(box||'<div class="frozen" style="background:#2e7d3233;color:var(--ac)">Tu es libre de chasser !</div>'):'';
+ $('cfrozen').innerHTML=box;
+ $('opps').innerHTML=Object.keys(TEAMS).filter(k=>k!==team).map(k=>{const kz=isZ(k),kf=fLeft(k);
+  return '<button class="opp" data-k="'+k+'"'+(f?' disabled':'')+'><b>'+TEAMS[k][0]+'</b><span>'+(kz?'🧟 Zombie'+(kf?' · ⛓️ '+fmt(kf):''):'🛡️ Survivant · '+'❤️'.repeat(hearts(k)))+'</span></button>'}).join('');
+ if(prevFrozen&&!f&&TEAMS[team]){SND.free();buzz(100)}
+ prevFrozen=!!f;
+}
+
+async function chooseUpgrade(type){
+ const mySt=st(team);
+ const pending=(mySt.pendingPoints||0)-1;
+ const patchObj={pendingPoints:Math.max(0,pending)};
+ if(type==='att')patchObj.zBonusAtt=(mySt.zBonusAtt||0)+1;
+ else patchObj.zBonusDef=(mySt.zBonusDef||0)+1;
+ await fetch(FB+'/teams/'+team+'.json',{method:'PATCH',body:JSON.stringify(patchObj)});
+ pull();
+}
+
+async function pull(){
+ try{
+  const d=await (await fetch(FB+'/.json')).json()||{};
+  claims=d.claims||{};teams=d.teams||{};
+  const z=isZ(team);
+  if(prevZ!==null&&z!==prevZ){if(z){SND.zombie();buzz([300,100,300]);toast('🧟 Tu es devenu ZOMBIE !')}else{SND.survivor();toast('🛡️ Tu es redevenu survivant !')}}
+  prevZ=z;
+  const ev=st(team).ev;
+  if(ev&&ev.at>lastEv){lastEv=ev.at;try{localStorage.setItem('zmb-ev-'+team,String(lastEv))}catch(e){}
+   if(Date.now()-ev.at<180000){toast(ev.msg);if(ev.kind==='hit'){SND.heartDown();buzz([200,80,200])}else if(ev.kind==='win'){SND.win()}else if(ev.kind==='freeze'){SND.freeze()}}}
+  render();
+ }catch(e){}
+}
+
+async function sha(t){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(t));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+async function add(raw){
+ const code=String(raw).toUpperCase().replace(/[^A-Z0-9]/g,'');
+ if(!code)return;
+ if(isZ(team)){SND.fail();return say('Les zombies ne ramassent pas d\'objets.',false)}
+ let h;try{h=await sha(code)}catch(e){return say('Navigateur non compatible.',false)}
+ const c=CODES.find(x=>x.h===h);
+ if(!c){SND.fail();return say('Code inconnu.',false)}
+ const key=c.id+'-'+c.k,it=itemOf(key);
+ const used=claims[key];
+ if(used){SND.fail();return say(used.team===team?'Ton équipe a déjà utilisé ce code.':'Trop tard : ce code a déjà été utilisé par une autre équipe.',false)}
+ if(it.t!=='ant'&&itemsOf(team).some(i=>i.id===it.id)){SND.fail();return say('Ton équipe a déjà : '+it.n+'. Un seul exemplaire par équipe.',false)}
+ try{
+  const r=await fetch(FB+'/claims/'+key+'.json',{method:'PUT',headers:{'If-Match':'null_etag'},body:JSON.stringify({team:team,at:Date.now()})});
+  if(r.status===412){pull();SND.fail();return say('Trop tard : ce code a déjà été utilisé par une autre équipe.',false)}
+  if(!r.ok)throw 0;
+  claims[key]={team:team};
+ }catch(e){return say('Pas de connexion : réessaie.',false)}
+ render();
+ if(it.t==='heart'){SND.heartUp();say('❤️ '+it.n+' : +1 cœur !',true)}
+ else{SND.found();say(it.t==='att'?'⚔️ '+it.n+' : +'+it.p+' attaque':it.t==='def'?'🛡️ '+it.n+' : +'+it.p+' défense':'💉 '+it.n+' trouvée !',true)}
+ buzz(150);
+}
+$('ok').onclick=()=>{add($('man').value);$('man').value=''};
+$('man').onkeydown=e=>{if(e.key==='Enter')$('ok').click()};
+
+// ---------- Logique de combat révisée
+const patch=(p,o)=>fetch(FB+p+'.json',{method:'PATCH',body:JSON.stringify(o)});
+function res(h,k){$('res').innerHTML='<div class="verdict '+(k==='win'?'win':k==='lose'?'lose':'')+'">'+h+'</div>'}
+
+async function fight(opp){
+ try{const d=await (await fetch(FB+'/.json')).json()||{};claims=d.claims||{};teams=d.teams||{}}catch(e){return res('Pas de connexion.')}
+ const a=st(team),b=st(opp);
+ if(!!a.zombie===!!b.zombie){SND.fail();return res(a.zombie?'Deux zombies ne se battent pas.':'Tu ne peux te battre que contre une équipe zombie.')}
+ const meZ=!!a.zombie,zt=meZ?team:opp,vt=meZ?opp:team;
+ if(fLeft(team)){SND.fail();return res('⛓️ Tu es immobilisé.')}
+ if(fLeft(opp)){SND.fail();return res('Cette équipe est immobilisée.')}
+ 
+ const key=zt+'_'+vt+'_'+Math.floor(Date.now()/15000);
+ try{const r=await fetch(FB+'/combats/'+key+'.json',{method:'PUT',headers:{'If-Match':'null_etag'},body:JSON.stringify({at:Date.now()})});
+  if(r.status===412){pull();return res('Ce combat vient d\'être joué. Regarde ton écran.')}}catch(e){return res('Pas de connexion.')}
+ 
+ const zAtt=getAtt(zt),zDef=getDef(zt);
+ const sAtt=getAtt(vt),sDef=getDef(vt);
+ const now=Date.now(),Z=TEAMS[zt][0],V=TEAMS[vt][0];
+ const vs=st(vt),zs=st(zt);
+
+ // Cas 1 : L'attaque du zombie dépasse la défense du survivant -> Blessure
+ if(zAtt > sDef){
+  const diff = zAtt - sDef;
+  const hNow = hearts(vt);
+  const n = Math.min(diff, hNow);
+  const lost = (vs.lost||0) + n;
+  const becomes = (hNow - n) <= 0;
+  const newKills = (zs.kills||0) + 1;
+  const newPending = (zs.pendingPoints||0) + 1;
+
+  const o={lost:lost};
+  if(becomes) o.zombie=true;
+
+  if(meZ){
+   o.ev={at:now,kind:becomes?'tozombie':'hit',msg:'💥 '+Z+' t\'a blessé : −'+n+' ❤️'+(becomes?' Tu deviens ZOMBIE !':'')};
+   await patch('/teams/'+vt,o);
+   await patch('/teams/'+zt,{kills:newKills, pendingPoints:newPending});
+   SND.win();buzz(150);
+   res('🧟 Tu blesses '+V+' : −'+n+' ❤️ (Att. '+zAtt+' vs Déf. '+sDef+') !<br>+1 Contamination ! Choisis ton bonus d\'amélioration dans "Équipement".','win');
+  }else{
+   await patch('/teams/'+vt,o);
+   await patch('/teams/'+zt,{kills:newKills, pendingPoints:newPending, ev:{at:now,kind:'win',msg:'🧟 Tu as touché '+V+' : −'+n+' ❤️'}});
+   SND.heartDown();buzz([200,80,200]);
+   res('💥 '+Z+' te blesse : −'+n+' ❤️ (Son attaque '+zAtt+' vs ta défense '+sDef+')'+(becomes?'<br>Tu deviens ZOMBIE !':''),'lose');
+  }
+ } 
+ // Cas 2 : La défense du survivant repousse l'attaque du zombie
+ else {
+  // Calcul d'immobilisation basé sur l'attaque du survivant OU la différence de défense
+  let freezeSecs = 30 * Math.max(1, sDef - zAtt);
+  if(sAtt > zDef){
+   freezeSecs = 30 * (sAtt - zDef); // Bonus si l'attaque du survivant surpasse la défense du zombie
+  }
+
+  if(meZ){
+   await patch('/teams/'+zt,{frozenUntil:now+freezeSecs*1000});
+   await patch('/teams/'+vt,{ev:{at:now,kind:'win',msg:'🛡️ Tu as repoussé '+Z+' !'}});
+   SND.freeze();
+   res('🛡️ Repoussé ! '+V+' a bloqué ton attaque (Déf. '+sDef+' vs Att. '+zAtt+'). Tu es immobilisé '+fmt(freezeSecs)+'.','lose');
+  }else{
+   await patch('/teams/'+zt,{frozenUntil:now+freezeSecs*1000,ev:{at:now,kind:'freeze',msg:'🛡️ '+V+' t\'a repoussé : immobilisé '+fmt(freezeSecs)}});
+   SND.win();
+   res('🛡️ Tu repousses '+Z+' ! (Ta défense '+sDef+' vs Son attaque '+zAtt+'). Il est immobilisé '+fmt(freezeSecs)+'.','win');
+  }
+ }
+ pull();
+}
+
+$('opps').onclick=e=>{const b=e.target.closest('.opp');if(!b||b.disabled)return;SND.tap();fight(b.dataset.k)};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{SND.tap();
+ document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('on',x===b));
+ ['equip','combat'].forEach(s=>$(s).classList.toggle('hide',s!==b.dataset.t));
+ $('res').innerHTML=''});
+if(FB&&TEAMS[team]){pull();setInterval(pull,2500);setInterval(render,1000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)pull()})}
+render();
+</script>
+</body>
+</html>
